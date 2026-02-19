@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="v1_14022026_create_table_users" author="Alena Sannikova">
+        <validCheckSum>ANY</validCheckSum>
+        <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v1_14022026_create_table_users.sql"/>
+    </changeSet>
+
+    <changeSet id="v2_16022026_create_table_products" author="Alena Sannikova">
+        <validCheckSum>ANY</validCheckSum>
+        <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v2_16022026_create_table_products.sql"/>
+    </changeSet>
+
+    <changeSet id="v3_16022026_create_table_orders" author="Alena Sannikova">
+        <validCheckSum>ANY</validCheckSum>
+        <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v3_16022026_create_table_orders.sql"/>
+    </changeSet>
+
+</databaseChangeLog>
