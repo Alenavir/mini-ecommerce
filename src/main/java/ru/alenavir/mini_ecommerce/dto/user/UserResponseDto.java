@@ -1,4 +1,4 @@
-package ru.alenavir.mini_ecommerce.dto;
+package ru.alenavir.mini_ecommerce.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;

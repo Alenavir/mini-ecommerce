@@ -1,4 +1,4 @@
-package ru.alenavir.mini_ecommerce.dto;
+package ru.alenavir.mini_ecommerce.dto.product;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class ProductResponseDto {
+
     private Long id;
     private String name;
     private String description;
@@ -20,4 +21,3 @@ public class ProductResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

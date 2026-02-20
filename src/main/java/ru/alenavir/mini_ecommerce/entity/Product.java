@@ -2,7 +2,9 @@ package ru.alenavir.mini_ecommerce.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.alenavir.mini_ecommerce.entity.enums.Category;
 
 import java.math.BigDecimal;
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
 @Table(name = "products")
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Getter
 public class Product {
 
     @Id

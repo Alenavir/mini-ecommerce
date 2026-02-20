@@ -1,10 +1,11 @@
 package ru.alenavir.mini_ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
-import ru.alenavir.mini_ecommerce.dto.UserCreateDto;
-import ru.alenavir.mini_ecommerce.dto.UserResponseDto;
-import ru.alenavir.mini_ecommerce.dto.UserUpdateDto;
+import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
+import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
+import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.User;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.mapper.UserMapper;
@@ -43,24 +44,20 @@ public class UserService {
     }
 
     public void delete(Long id) {
+        if (!repo.existsById(id)) {
+            throw new NotFoundException("User with id " + id + " not found");
+        }
+
         repo.deleteById(id);
     }
 
-    public UserResponseDto update(Long id, UserUpdateDto dto) {
-
+    public UserResponseDto update(Long id, UserUpdateDto dto) throws BadRequestException {
         User exist = repo.findById(id)
                 .orElseThrow(() ->
                         new NotFoundException("User with id " + id + " not found")
                 );
 
-        if (dto.getName() != null)
-            exist.setName(dto.getName());
-
-        if (dto.getEmail() != null)
-            exist.setEmail(dto.getEmail());
-
-        if (dto.getIsActive() != null)
-            exist.setIsActive(dto.getIsActive());
+        mapper.updateUserFromDto(dto, exist);
 
         exist.setUpdatedAt(LocalDateTime.now());
 
