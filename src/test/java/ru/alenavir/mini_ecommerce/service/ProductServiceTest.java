@@ -64,7 +64,7 @@ class ProductServiceTest {
     void create_ShouldReturnResponseDto() {
         when(mapper.toEntity(createDto)).thenReturn(product);
         when(repo.save(product)).thenReturn(product);
-        when(mapper.toResponse(product)).thenReturn(responseDto);
+        when(mapper.toDto(product)).thenReturn(responseDto);
 
         ProductResponseDto result = service.create(createDto);
 
@@ -79,7 +79,7 @@ class ProductServiceTest {
         List<ProductResponseDto> responses = Collections.singletonList(responseDto);
 
         when(repo.findAll()).thenReturn(products);
-        when(mapper.toResponseList(products)).thenReturn(responses);
+        when(mapper.toList(products)).thenReturn(responses);
 
         List<ProductResponseDto> result = service.findAll();
 
@@ -90,7 +90,7 @@ class ProductServiceTest {
     @Test
     void findById_WhenFound_ShouldReturnResponse() {
         when(repo.findById(1L)).thenReturn(Optional.of(product));
-        when(mapper.toResponse(product)).thenReturn(responseDto);
+        when(mapper.toDto(product)).thenReturn(responseDto);
 
         ProductResponseDto result = service.findById(1L);
 
@@ -110,7 +110,7 @@ class ProductServiceTest {
         // mapper обновляет поля в существующем объекте
         doNothing().when(mapper).updateProductFromDto(updateDto, product);
         when(repo.save(product)).thenReturn(product);
-        when(mapper.toResponse(product)).thenReturn(responseDto);
+        when(mapper.toDto(product)).thenReturn(responseDto);
 
         ProductResponseDto result = service.update(1L, updateDto);
 

@@ -48,7 +48,6 @@ class UserServiceTest {
     private final UserUpdateDto updateDto = new UserUpdateDto() {{
         setName("Alice Updated");
         setEmail("alice.updated@gmail.com");
-        setIsActive(false);
     }};
 
     private final UserResponseDto responseDto = new UserResponseDto() {{

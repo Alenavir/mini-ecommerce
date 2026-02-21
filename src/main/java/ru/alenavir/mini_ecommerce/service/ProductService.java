@@ -27,43 +27,37 @@ public class ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
 
-        return mapper.toResponse(repo.save(product));
+        return mapper.toDto(repo.save(product));
     }
 
     public List<ProductResponseDto> findAll() {
-        return mapper.toResponseList(repo.findAll());
+        return mapper.toList(repo.findAll());
     }
 
     public ProductResponseDto findById(Long id) {
 
         Product product = repo.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Product with id " + id + " not found")
-                );
+                .orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
 
-        return mapper.toResponse(product);
+        return mapper.toDto(product);
     }
 
     public ProductResponseDto update(Long id, ProductUpdateDto dto) {
 
         Product exist = repo.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Product with id " + id + " not found")
-                );
+                .orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
 
         mapper.updateProductFromDto(dto, exist);
 
         exist.setUpdatedAt(LocalDateTime.now());
 
-        return mapper.toResponse(repo.save(exist));
+        return mapper.toDto(repo.save(exist));
     }
 
     public void delete(Long id) {
 
         Product product = repo.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Product with id " + id + " not found")
-                );
+                .orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
 
         repo.delete(product);
     }

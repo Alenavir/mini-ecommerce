@@ -2,12 +2,18 @@ package ru.alenavir.mini_ecommerce.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Getter
 public class OrderItem {
 
     @Id
@@ -24,6 +30,10 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Column(nullable = false)
     private int quantity;
+
+    @Column(nullable = false)
+    private BigDecimal price;
 }
 

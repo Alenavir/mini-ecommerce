@@ -26,7 +26,7 @@ public class ProductCreateDto {
     @PositiveOrZero(message = "Quantity cannot be negative")
     private Integer quantityInStock;
 
-    @NotBlank(message = "Category must not be blank")
+    @NotNull(message = "Category must not be null")
     private Category category;
 
     @NotBlank(message = "SKU is required")

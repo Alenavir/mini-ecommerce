@@ -11,12 +11,18 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductCreateDto dto);
 
-    ProductResponseDto toResponse(Product product);
+    ProductResponseDto toDto(Product product);
 
-    List<ProductResponseDto> toResponseList(List<Product> products);
+    List<ProductResponseDto> toList(List<Product> products);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     void updateProductFromDto(ProductUpdateDto dto, @MappingTarget Product entity);
 }

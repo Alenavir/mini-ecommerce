@@ -15,6 +15,5 @@ public class UserUpdateDto {
     @Email(message = "Email must be valid")
     private String email;
 
-    private Boolean isActive;
 }
 

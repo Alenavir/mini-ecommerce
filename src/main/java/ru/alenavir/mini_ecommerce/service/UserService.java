@@ -7,12 +7,14 @@ import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.User;
+import ru.alenavir.mini_ecommerce.entity.enums.Role;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.mapper.UserMapper;
 import ru.alenavir.mini_ecommerce.repo.UserRepo;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,8 @@ public class UserService {
     public UserResponseDto save(UserCreateDto dto) {
 
         User user = mapper.toEntity(dto);
+        user.setPasswordHash(dto.getPassword());
+        user.setRoles(Set.of(Role.USER));
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setIsActive(true);
@@ -37,9 +41,7 @@ public class UserService {
 
     public UserResponseDto findById(Long id) {
         User user = repo.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("User with id " + id + " not found")
-                );
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
         return mapper.toDto(user);
     }
 
@@ -53,9 +55,7 @@ public class UserService {
 
     public UserResponseDto update(Long id, UserUpdateDto dto) throws BadRequestException {
         User exist = repo.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("User with id " + id + " not found")
-                );
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
 
         mapper.updateUserFromDto(dto, exist);
 

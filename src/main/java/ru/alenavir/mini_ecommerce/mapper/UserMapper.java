@@ -1,10 +1,7 @@
 package ru.alenavir.mini_ecommerce.mapper;
 
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
@@ -15,6 +12,12 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     User toEntity(UserCreateDto dto);
 
     UserResponseDto toDto(User user);

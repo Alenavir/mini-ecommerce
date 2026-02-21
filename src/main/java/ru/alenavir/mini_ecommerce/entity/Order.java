@@ -1,8 +1,7 @@
 package ru.alenavir.mini_ecommerce.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.entity.enums.PaymentMethod;
 
@@ -15,6 +14,8 @@ import java.util.List;
 @Table(name = "orders")
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Getter
 public class Order {
 
     @Id
@@ -33,7 +34,6 @@ public class Order {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    @Column(nullable = false)
     private List<OrderItem> items = new ArrayList<>();
 
     @Column(nullable = false)
@@ -48,7 +48,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentMethod payment;
+    private PaymentMethod paymentMethod;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

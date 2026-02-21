@@ -13,7 +13,8 @@ CREATE TABLE order_items (
      id SERIAL PRIMARY KEY,
      order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
      product_id INTEGER NOT NULL REFERENCES products(id),
-     quantity INT NOT NULL DEFAULT 1
+     quantity INT NOT NULL DEFAULT 1,
+     price NUMERIC(19,2) NOT NULL
 );
 
 COMMENT ON TABLE orders IS 'Таблица заказов пользователей';
@@ -32,4 +33,5 @@ COMMENT ON COLUMN order_items.id IS 'Уникальный идентификат
 COMMENT ON COLUMN order_items.order_id IS 'Идентификатор заказа, к которому относится товар';
 COMMENT ON COLUMN order_items.product_id IS 'Идентификатор товара';
 COMMENT ON COLUMN order_items.quantity IS 'Количество единиц товара в заказе';
+COMMENT ON COLUMN order_items.price IS 'Цена товара';
 
