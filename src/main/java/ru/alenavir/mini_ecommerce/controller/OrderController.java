@@ -14,7 +14,7 @@ import ru.alenavir.mini_ecommerce.service.OrderService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
 

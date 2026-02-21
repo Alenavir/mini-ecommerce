@@ -14,13 +14,13 @@ import ru.alenavir.mini_ecommerce.service.UserService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService service;
 
-    @PostMapping
+    @PostMapping("/registration")
     public ResponseEntity<UserResponseDto> create(
             @Valid @RequestBody UserCreateDto createDto
     ) throws BadRequestException {
