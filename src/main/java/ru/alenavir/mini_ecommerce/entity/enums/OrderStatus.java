@@ -2,7 +2,7 @@ package ru.alenavir.mini_ecommerce.entity.enums;
 
 public enum OrderStatus {
 
-    NEW {
+    PROCESSING {
         @Override
         public boolean canChangeTo(OrderStatus next) {
             return next == PAID || next == CANCELLED;

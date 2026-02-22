@@ -2,6 +2,7 @@ package ru.alenavir.mini_ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.dto.order.OrderCreateDto;
 import ru.alenavir.mini_ecommerce.dto.order.OrderItemCreateDto;
 import ru.alenavir.mini_ecommerce.dto.order.OrderResponseDto;
@@ -11,6 +12,8 @@ import ru.alenavir.mini_ecommerce.entity.OrderItem;
 import ru.alenavir.mini_ecommerce.entity.Product;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
+import ru.alenavir.mini_ecommerce.kafka.OrderCreatedEvent;
+import ru.alenavir.mini_ecommerce.kafka.OrderEventProducer;
 import ru.alenavir.mini_ecommerce.mapper.OrderMapper;
 import ru.alenavir.mini_ecommerce.repo.OrderRepo;
 import ru.alenavir.mini_ecommerce.repo.ProductRepo;
@@ -30,7 +33,9 @@ public class OrderService {
     private final OrderRepo repo;
     private final ProductRepo productRepo;
     private final OrderMapper mapper;
+    private final OrderEventProducer orderEventProducer;
 
+    @Transactional
     public OrderResponseDto create(OrderCreateDto createDto) {
         Order order = mapper.toEntity(createDto);
 
@@ -64,13 +69,20 @@ public class OrderService {
 
         order.setItems(items);
         order.setTotalAmount(totalAmount);
-        order.setStatus(OrderStatus.NEW);
-
+        order.setStatus(OrderStatus.PROCESSING);
         LocalDateTime now = LocalDateTime.now();
         order.setCreatedAt(now);
         order.setUpdatedAt(now);
 
         Order saved = repo.save(order);
+
+        // --- Kafka ---
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                saved.getId(),
+                saved.getUserId(),
+                productIds
+        );
+        orderEventProducer.sendOrderCreatedEvent(event);
 
         return mapper.toDto(saved);
     }
