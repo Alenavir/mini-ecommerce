@@ -42,27 +42,26 @@ public class OrderEventConsumer {
             return;
         }
 
-        // Загружаем продукты через проекцию
+        // Загрузка продукты через проекцию
         List<ProductStockProjection> products = productRepository.findByIdIn(event.getProductIds());
         Map<Long, Integer> productStockMap = new HashMap<>();
         for (ProductStockProjection p : products) {
             productStockMap.put(p.getId(), p.getQuantityInStock());
         }
 
-        // Проверяем наличие товара
+        // Проверка наличие товара
         boolean allAvailable = order.getItems().stream()
                 .allMatch(item -> productStockMap.getOrDefault(item.getProduct().getId(), 0) >= item.getQuantity());
 
         if (allAvailable) {
-            // Формируем Map для batch update
+            // Формирование Map для batch update
             Map<Long, Integer> updatedQuantities = order.getItems().stream()
                     .collect(Collectors.toMap(
                             item -> item.getProduct().getId(),
                             item -> productStockMap.get(item.getProduct().getId()) - item.getQuantity(),
-                            (oldVal, newVal) -> newVal // избегаем падения при дублирующихся productId
+                            (oldVal, newVal) -> newVal // исключение падения при дублирующихся productId
                     ));
 
-            // Вызов сервиса для batch update
             batchUpdateService.batchUpdateQuantities(updatedQuantities);
 
             order.setStatus(OrderStatus.PAID);
