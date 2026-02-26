@@ -1,20 +1,22 @@
 package ru.alenavir.mini_ecommerce.kafka;
 
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.entity.Order;
+import ru.alenavir.mini_ecommerce.entity.OrderItem;
+import ru.alenavir.mini_ecommerce.entity.Product;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.repo.OrderRepo;
 import ru.alenavir.mini_ecommerce.repo.ProductRepo;
-import ru.alenavir.mini_ecommerce.repo.projection.ProductStockProjection;
-import ru.alenavir.mini_ecommerce.service.ProductBatchUpdateService;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,50 +29,50 @@ public class OrderEventConsumer {
 
     private final OrderRepo orderRepository;
     private final ProductRepo productRepository;
-    private final ProductBatchUpdateService batchUpdateService;
 
     @KafkaListener(topics = "order-events", groupId = "order-group")
+    @Retryable(
+            value = OptimisticLockException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
     @Transactional
     public void handleOrderCreated(OrderCreatedEvent event) {
+
+        log.info("Received OrderCreatedEvent for orderId={}", event.getOrderId());
 
         Order order = orderRepository.findById(event.getOrderId())
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        // Идемпотентность
         if (order.getStatus() != OrderStatus.PROCESSING) {
-            log.info("Order {} already processed", order.getId());
+            log.info("Order {} already processed, skipping", order.getId());
             return;
         }
 
-        // Загрузка продукты через проекцию
-        List<ProductStockProjection> products = productRepository.findByIdIn(event.getProductIds());
-        Map<Long, Integer> productStockMap = new HashMap<>();
-        for (ProductStockProjection p : products) {
-            productStockMap.put(p.getId(), p.getQuantityInStock());
-        }
+        List<Product> products = productRepository.findAllById(
+                order.getItems().stream().map(i -> i.getProduct().getId()).toList()
+        );
+        Map<Long, Product> productMap = products.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
 
-        // Проверка наличие товара
         boolean allAvailable = order.getItems().stream()
-                .allMatch(item -> productStockMap.getOrDefault(item.getProduct().getId(), 0) >= item.getQuantity());
+                .allMatch(item -> productMap.get(item.getProduct().getId()).getQuantityInStock() >= item.getQuantity());
 
-        if (allAvailable) {
-            // Формирование Map для batch update
-            Map<Long, Integer> updatedQuantities = order.getItems().stream()
-                    .collect(Collectors.toMap(
-                            item -> item.getProduct().getId(),
-                            item -> productStockMap.get(item.getProduct().getId()) - item.getQuantity(),
-                            (oldVal, newVal) -> newVal // исключение падения при дублирующихся productId
-                    ));
-
-            batchUpdateService.batchUpdateQuantities(updatedQuantities);
-
-            order.setStatus(OrderStatus.PAID);
-            log.info("Order {} status updated to PAID", order.getId());
-        } else {
+        if (!allAvailable) {
             order.setStatus(OrderStatus.CANCELLED);
-            log.info("Order {} status updated to CANCELLED due to insufficient stock", order.getId());
+            orderRepository.save(order);
+            log.info("Order {} cancelled due to insufficient stock", order.getId());
+            return;
         }
 
+        for (OrderItem item : order.getItems()) {
+            Product product = productMap.get(item.getProduct().getId());
+            product.setQuantityInStock(product.getQuantityInStock() - item.getQuantity());
+            productRepository.save(product);
+        }
+
+        order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
+        log.info("Order {} processed successfully: PAID", order.getId());
     }
 }

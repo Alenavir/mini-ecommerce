@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(50),
     sku VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0
 );
 
 COMMENT ON TABLE products IS 'Таблица продуктов системы';
@@ -20,3 +21,4 @@ COMMENT ON COLUMN products.category IS 'Категория товара';
 COMMENT ON COLUMN products.sku IS 'Артикль товара';
 COMMENT ON COLUMN products.created_at IS 'Дата и время создания товара';
 COMMENT ON COLUMN products.updated_at IS 'Дата и время последнего обновления товара';
+COMMENT ON COLUMN products.version IS 'Версия записи для Optimistic Locking';

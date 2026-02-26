@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
@@ -28,8 +27,11 @@ import ru.alenavir.mini_ecommerce.repo.ProductRepo;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +40,6 @@ import static org.awaitility.Awaitility.await;
 @Testcontainers
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ActiveProfiles("local")
 class OrderKafkaIntegrationTest {
 
     @Container
@@ -235,5 +236,45 @@ class OrderKafkaIntegrationTest {
                 assertThat(found).isTrue();
             });
         }
+    }
+
+    @Test
+    void parallelOrders_StockHandledCorrectly() throws InterruptedException {
+
+        Product product = createProduct("parallel", 5);
+
+        int totalOrders = 10;
+        List<Order> orders = new ArrayList<>();
+        for (int i = 0; i < totalOrders; i++) {
+            orders.add(createOrder(product, 1));
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(totalOrders);
+
+        for (Order order : orders) {
+            executor.submit(() -> sendEvent(order));
+        }
+
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+
+            Product updatedProduct = productRepo.findById(product.getId()).orElseThrow();
+            assertThat(updatedProduct.getQuantityInStock()).isZero();
+
+            long paidCount = orders.stream()
+                    .map(o -> orderRepo.findById(o.getId()).orElseThrow())
+                    .filter(o -> o.getStatus() == OrderStatus.PAID)
+                    .count();
+
+            long cancelledCount = orders.stream()
+                    .map(o -> orderRepo.findById(o.getId()).orElseThrow())
+                    .filter(o -> o.getStatus() == OrderStatus.CANCELLED)
+                    .count();
+
+            assertThat(paidCount).isEqualTo(5);
+            assertThat(cancelledCount).isEqualTo(totalOrders - 5);
+        });
     }
 }

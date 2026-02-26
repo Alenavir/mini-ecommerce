@@ -18,7 +18,7 @@ import java.util.Date;
 public class JwtService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtService.class);
-    @Value("8074658237c236e39e96e909ac1abb25a3e1773b100096ad6877c439cd452c17")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
     public JwtAuthenticationDto generateAuthToken(String email) {
