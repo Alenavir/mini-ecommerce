@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.alenavir.mini_ecommerce.dto.user.AdminUserUpdateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
@@ -44,10 +45,9 @@ public class UserService {
         return mapper.toDto(repo.save(user));
     }
 
-    public List<UserResponseDto> findAll() {
-        return mapper.toDtoList(repo.findAll());
+    public List<UserResponseDto> findAll(String email, String name) {
+        return mapper.toDtoList(repo.search(email, name));
     }
-
     public UserResponseDto findById(Long id) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
@@ -62,11 +62,27 @@ public class UserService {
         repo.deleteById(id);
     }
 
+    public void deactivate(Long id) {
+        User user = repo.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+        user.setIsActive(false);
+    }
+
     public UserResponseDto update(Long id, UserUpdateDto dto) throws BadRequestException {
         User exist = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
 
         mapper.updateUserFromDto(dto, exist);
+
+        exist.setUpdatedAt(LocalDateTime.now());
+
+        return mapper.toDto(repo.save(exist));
+    }
+
+    public UserResponseDto updateByAdmin(Long id, AdminUserUpdateDto dto) throws BadRequestException {
+        User exist = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+
+        mapper.updateUserFromDtoByAdmin(dto, exist);
 
         exist.setUpdatedAt(LocalDateTime.now());
 

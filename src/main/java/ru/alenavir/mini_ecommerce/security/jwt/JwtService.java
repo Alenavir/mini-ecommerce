@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtService {
@@ -66,18 +67,41 @@ public class JwtService {
         return false;
     }
 
+    public String getJtiFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSingInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getId(); // JTI
+    }
+
     private String generateJwtToken(String email) {
+        String jti = UUID.randomUUID().toString();
         Date date = Date.from(LocalDateTime.now().plusMinutes(60).atZone(ZoneId.systemDefault()).toInstant());
         return Jwts.builder()
                 .subject(email)
+                .setId(jti)
                 .expiration(date)
                 .signWith(getSingInKey())
                 .compact();
     }
+
+    public Date getExpirationFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSingInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getExpiration();
+    }
+
     private String generateRefreshToken(String email) {
+        String jti = UUID.randomUUID().toString();
         Date date = Date.from(LocalDateTime.now().plusDays(1).atZone(ZoneId.systemDefault()).toInstant());
         return Jwts.builder()
                 .subject(email)
+                .setId(jti)
                 .expiration(date)
                 .signWith(getSingInKey())
                 .compact();

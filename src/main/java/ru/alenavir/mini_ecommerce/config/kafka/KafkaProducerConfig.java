@@ -1,4 +1,4 @@
-package ru.alenavir.mini_ecommerce.config;
+package ru.alenavir.mini_ecommerce.config.kafka;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;

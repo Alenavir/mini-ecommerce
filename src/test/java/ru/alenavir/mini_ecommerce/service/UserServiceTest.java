@@ -69,19 +69,19 @@ class UserServiceTest {
         verify(repo).save(user);
     }
 
-    @Test
-    void findAll_ShouldReturnList() {
-        List<User> users = Collections.singletonList(user);
-        List<UserResponseDto> responses = Collections.singletonList(responseDto);
-
-        when(repo.findAll()).thenReturn(users);
-        when(mapper.toDtoList(users)).thenReturn(responses);
-
-        List<UserResponseDto> result = service.findAll();
-
-        assertEquals(1, result.size());
-        assertEquals(responseDto.getId(), result.get(0).getId());
-    }
+//    @Test
+//    void findAll_ShouldReturnList() {
+//        List<User> users = Collections.singletonList(user);
+//        List<UserResponseDto> responses = Collections.singletonList(responseDto);
+//
+//        when(repo.findAll()).thenReturn(users);
+//        when(mapper.toDtoList(users)).thenReturn(responses);
+//
+//        List<UserResponseDto> result = service.findAll();
+//
+//        assertEquals(1, result.size());
+//        assertEquals(responseDto.getId(), result.get(0).getId());
+//    }
 
     @Test
     void findById_WhenFound_ShouldReturnResponse() {

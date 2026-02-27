@@ -2,6 +2,7 @@ package ru.alenavir.mini_ecommerce.mapper;
 
 
 import org.mapstruct.*;
+import ru.alenavir.mini_ecommerce.dto.user.AdminUserUpdateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
@@ -26,5 +27,8 @@ public interface UserMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateUserFromDto(UserUpdateDto dto, @MappingTarget User entity);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateUserFromDtoByAdmin(AdminUserUpdateDto dto, @MappingTarget User entity);
 }
 

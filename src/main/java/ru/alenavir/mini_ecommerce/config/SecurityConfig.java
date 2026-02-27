@@ -30,6 +30,7 @@ public class SecurityConfig {
     public static final String REGISTRATION_ENTRY_POINT = API_V1 + "/users/registration";
     public static final String AUTH_ENTRY_POINT = API_V1 + "/auth/**";
     public static final String PRODUCTS_VIEW_ENTRY_POINT = API_V1 + "/products/**";
+    public static final String ADMIN_ENTRY_POINT = API_V1 + "/admin/**";
 
     public static final String ROLE_ADMIN = "ADMIN";
 
@@ -44,8 +45,9 @@ public class SecurityConfig {
                         // просмотр продуктов доступен всем
                         .requestMatchers(HttpMethod.GET, PRODUCTS_VIEW_ENTRY_POINT).permitAll()
 
-                        // любые изменения продуктов — только админ
+                        // админка доступна только users с ролью ADMIN
                         .requestMatchers(PRODUCTS_VIEW_ENTRY_POINT).hasRole(ROLE_ADMIN)
+                        .requestMatchers(ADMIN_ENTRY_POINT).hasRole(ROLE_ADMIN)
 
                         // все остальные запросы требуют авторизации
                         .anyRequest().authenticated()

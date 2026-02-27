@@ -1,4 +1,4 @@
-package ru.alenavir.mini_ecommerce.config;
+package ru.alenavir.mini_ecommerce.config.kafka;
 
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;

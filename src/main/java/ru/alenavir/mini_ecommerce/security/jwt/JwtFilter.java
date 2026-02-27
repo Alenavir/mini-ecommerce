@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.alenavir.mini_ecommerce.security.CustomUserDetails;
 import ru.alenavir.mini_ecommerce.security.CustomUserServiceImpl;
+import ru.alenavir.mini_ecommerce.security.TokenBlacklistService;
 
 import java.io.IOException;
 
@@ -21,18 +22,26 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final CustomUserServiceImpl customUserService;
+    private final TokenBlacklistService blacklistService;
 
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromRequest(request);
         if (token != null && jwtService.validateJwtToken(token)) {
+
+            String jti = jwtService.getJtiFromToken(token);
+            if (blacklistService.isBlacklisted(jti)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
             setCustomUserDetailsToSecurityContextHolder(token);
         }
-        filterChain.doFilter(request, response);
 
+        filterChain.doFilter(request, response);
     }
 
     private void setCustomUserDetailsToSecurityContextHolder(String token) {

@@ -1,6 +1,8 @@
 package ru.alenavir.mini_ecommerce.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,9 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.alenavir.mini_ecommerce.dto.user.auth.JwtAuthenticationDto;
 import ru.alenavir.mini_ecommerce.dto.user.auth.RefreshTokenDto;
 import ru.alenavir.mini_ecommerce.dto.user.auth.UserCredentialsDto;
+import ru.alenavir.mini_ecommerce.security.TokenBlacklistService;
+import ru.alenavir.mini_ecommerce.security.jwt.JwtService;
 import ru.alenavir.mini_ecommerce.service.UserService;
 
 import javax.naming.AuthenticationException;
+import java.util.Date;
 
 @RequiredArgsConstructor
 @RestController

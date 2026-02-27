@@ -6,10 +6,12 @@ import ru.alenavir.mini_ecommerce.dto.product.ProductCreateDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductResponseDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.Product;
+import ru.alenavir.mini_ecommerce.entity.enums.Category;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.mapper.ProductMapper;
 import ru.alenavir.mini_ecommerce.repo.ProductRepo;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,8 +32,16 @@ public class ProductService {
         return mapper.toDto(repo.save(product));
     }
 
-    public List<ProductResponseDto> findAll() {
-        return mapper.toList(repo.findAll());
+    public List<ProductResponseDto> search(
+            String name,
+            String sku,
+            Category category,
+            BigDecimal minPrice,
+            BigDecimal maxPrice
+    ) {
+        return mapper.toList(
+                repo.search(name, sku, category, minPrice, maxPrice)
+        );
     }
 
     public ProductResponseDto findById(Long id) {

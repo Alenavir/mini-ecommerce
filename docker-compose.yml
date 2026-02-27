@@ -28,5 +28,12 @@ services:
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
       ALLOW_PLAINTEXT_LISTENER: "yes"
 
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
 volumes:
   postgres_data:
