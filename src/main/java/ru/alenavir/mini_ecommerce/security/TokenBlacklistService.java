@@ -14,7 +14,7 @@ public class TokenBlacklistService {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String PREFIX = "blacklist:";
 
-    // Добавить JTI в Redis с TTL
+    // Добавление JTI в Redis с TTL
     public void blacklistToken(String jti, Date expiration) {
         long ttlMillis = expiration.getTime() - System.currentTimeMillis();
         if (ttlMillis > 0) {
@@ -22,7 +22,7 @@ public class TokenBlacklistService {
         }
     }
 
-    // Проверить JTI
+    // Проверка JTI
     public boolean isBlacklisted(String jti) {
         return redisTemplate.hasKey(PREFIX + jti);
     }

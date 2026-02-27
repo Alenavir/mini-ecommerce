@@ -1,6 +1,9 @@
 package ru.alenavir.mini_ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.dto.order.OrderCreateDto;
@@ -87,6 +90,7 @@ public class OrderService {
         return mapper.toDto(saved);
     }
 
+    @Cacheable(value = "orders", key = "#id")
     public OrderResponseDto findById(Long id) {
         Order order = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order with id " + id + " not found"));
@@ -98,6 +102,7 @@ public class OrderService {
         return mapper.toDtoList(repo.findAllWithItemsAndProducts());
     }
 
+    @CacheEvict(value = "orders", key = "#id")
     public void delete(Long id) {
         Order order = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order with id " + id + " not found"));
@@ -105,6 +110,7 @@ public class OrderService {
         repo.delete(order);
     }
 
+    @CachePut(value = "orders", key = "#orderId")
     public OrderResponseDto update(Long id, OrderUpdateDto updateDto) {
         Order order = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order with id " + id + " not found"));

@@ -2,8 +2,12 @@ package ru.alenavir.mini_ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.dto.user.AdminUserUpdateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
@@ -48,12 +52,15 @@ public class UserService {
     public List<UserResponseDto> findAll(String email, String name) {
         return mapper.toDtoList(repo.search(email, name));
     }
+
+    @Cacheable(value = "users", key = "#id")
     public UserResponseDto findById(Long id) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
         return mapper.toDto(user);
     }
 
+    @CacheEvict(value = "users", key = "#id")
     public void delete(Long id) {
         if (!repo.existsById(id)) {
             throw new NotFoundException("User with id " + id + " not found");
@@ -62,11 +69,18 @@ public class UserService {
         repo.deleteById(id);
     }
 
-    public void deactivate(Long id) {
-        User user = repo.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+    @CachePut(value = "users", key = "#id")
+    public UserResponseDto deactivate(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+
         user.setIsActive(false);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        return mapper.toDto(repo.save(user));
     }
 
+    @CachePut(value = "users", key = "#id")
     public UserResponseDto update(Long id, UserUpdateDto dto) throws BadRequestException {
         User exist = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
@@ -78,6 +92,7 @@ public class UserService {
         return mapper.toDto(repo.save(exist));
     }
 
+    @CachePut(value = "users", key = "#id")
     public UserResponseDto updateByAdmin(Long id, AdminUserUpdateDto dto) throws BadRequestException {
         User exist = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));

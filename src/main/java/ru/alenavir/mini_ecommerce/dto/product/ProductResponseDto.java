@@ -4,12 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.alenavir.mini_ecommerce.entity.enums.Category;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class ProductResponseDto {
+public class ProductResponseDto implements Serializable {
 
     private Long id;
     private String name;

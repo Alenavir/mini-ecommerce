@@ -1,9 +1,13 @@
 package ru.alenavir.mini_ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ru.alenavir.mini_ecommerce.dto.product.ProductCreateDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductResponseDto;
+import ru.alenavir.mini_ecommerce.dto.product.ProductSearchDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.Product;
 import ru.alenavir.mini_ecommerce.entity.enums.Category;
@@ -32,18 +36,20 @@ public class ProductService {
         return mapper.toDto(repo.save(product));
     }
 
-    public List<ProductResponseDto> search(
-            String name,
-            String sku,
-            Category category,
-            BigDecimal minPrice,
-            BigDecimal maxPrice
-    ) {
-        return mapper.toList(
-                repo.search(name, sku, category, minPrice, maxPrice)
+    public List<ProductResponseDto> search(ProductSearchDto filter) {
+
+        List<Product> products = repo.search(
+                filter.getName(),
+                filter.getSku(),
+                filter.getCategory(),
+                filter.getMinPrice(),
+                filter.getMaxPrice()
         );
+
+        return mapper.toList(products);
     }
 
+    @Cacheable(value = "products", key = "#id")
     public ProductResponseDto findById(Long id) {
 
         Product product = repo.findById(id)
@@ -52,6 +58,7 @@ public class ProductService {
         return mapper.toDto(product);
     }
 
+    @CachePut(value = "products", key = "#id")
     public ProductResponseDto update(Long id, ProductUpdateDto dto) {
 
         Product exist = repo.findById(id)
@@ -64,6 +71,7 @@ public class ProductService {
         return mapper.toDto(repo.save(exist));
     }
 
+    @CacheEvict(value = "products", key = "#id")
     public void delete(Long id) {
 
         Product product = repo.findById(id)

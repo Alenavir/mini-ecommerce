@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.alenavir.mini_ecommerce.dto.product.ProductCreateDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductResponseDto;
+import ru.alenavir.mini_ecommerce.dto.product.ProductSearchDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.enums.Category;
 import ru.alenavir.mini_ecommerce.service.ProductService;
@@ -39,16 +40,8 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponseDto>> getAll(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String sku,
-            @RequestParam(required = false) Category category,
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice
-    ) {
-        return ResponseEntity.ok(
-                service.search(name, sku, category, minPrice, maxPrice)
-        );
+    public ResponseEntity<List<ProductResponseDto>> search(ProductSearchDto filter) {
+        return ResponseEntity.ok(service.search(filter));
     }
 
     @DeleteMapping("/{id}")

@@ -5,13 +5,14 @@ import lombok.Setter;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.entity.enums.PaymentMethod;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
-public class OrderResponseDto {
+public class OrderResponseDto implements Serializable {
 
     private Long id;
     private Long userId;
