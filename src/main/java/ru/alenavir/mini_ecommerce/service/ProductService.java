@@ -10,12 +10,10 @@ import ru.alenavir.mini_ecommerce.dto.product.ProductResponseDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductSearchDto;
 import ru.alenavir.mini_ecommerce.dto.product.ProductUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.Product;
-import ru.alenavir.mini_ecommerce.entity.enums.Category;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.mapper.ProductMapper;
 import ru.alenavir.mini_ecommerce.repo.ProductRepo;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 

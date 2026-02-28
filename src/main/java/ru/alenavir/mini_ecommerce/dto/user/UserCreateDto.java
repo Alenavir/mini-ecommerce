@@ -1,5 +1,6 @@
 package ru.alenavir.mini_ecommerce.dto.user;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,21 +10,23 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "DTO для регистрации нового пользователя")
 public class UserCreateDto {
 
-    @NotBlank(message = "Name must not be blank")
+    @Schema(description = "Имя пользователя", example = "Ivan Petrov")
+    @NotBlank
     @Size(min = 2, max = 255)
     private String name;
 
-    @NotBlank(message = "Email must not be blank")
-    @Email(message = "Email must be valid")
+    @Schema(description = "Email пользователя", example = "ivan@mail.com")
+    @NotBlank
+    @Email
     private String email;
 
-    // Дополнительно можно требовать хотя бы одну цифру и одну букву
-    @NotBlank(message = "Password must not be blank")
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @Schema(description = "Пароль пользователя (минимум одна буква и одна цифра)", example = "password123")
+    @NotBlank
+    @Size(min = 6, max = 100)
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
             message = "Password must contain at least one letter and one number")
     private String password;
-
 }

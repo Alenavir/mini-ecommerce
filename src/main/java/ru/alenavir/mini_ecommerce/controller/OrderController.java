@@ -1,5 +1,8 @@
 package ru.alenavir.mini_ecommerce.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,56 +20,73 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Tag(name = "Orders", description = "Управление заказами")
 public class OrderController {
 
     private final OrderService service;
 
+    @Operation(
+            summary = "Создать заказ",
+            description = "Создание нового заказа для авторизованного пользователя"
+    )
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderResponseDto> create(
-            @RequestBody @Valid OrderCreateDto createDto
+            @org.springframework.web.bind.annotation.RequestBody @Valid OrderCreateDto createDto
     ) {
-        OrderResponseDto response = service.create(createDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.create(createDto));
     }
 
+    @Operation(summary = "Получить заказ по ID")
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @orderSecurity.isOwner(#id, authentication.principal.id)")
-    public ResponseEntity<OrderResponseDto> getById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponseDto> getById(
+            @Parameter(description = "ID заказа", example = "1")
+            @PathVariable Long id) {
+
         return ResponseEntity.ok(service.findById(id));
     }
 
+    @Operation(summary = "Получить список всех заказов (только ADMIN)")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderResponseDto>> getAll() {
-        List<OrderResponseDto> response = service.findAll();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.findAll());
     }
 
+    @Operation(summary = "Удалить заказ (только ADMIN)")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "ID заказа", example = "1")
+            @PathVariable Long id) {
+
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Обновить данные заказа (только ADMIN)")
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponseDto> update(
+            @Parameter(description = "ID заказа", example = "1")
             @PathVariable Long id,
-            @RequestBody @Valid OrderUpdateDto updateDto
+            @org.springframework.web.bind.annotation.RequestBody @Valid OrderUpdateDto updateDto
     ) {
-        OrderResponseDto response = service.update(id, updateDto);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.update(id, updateDto));
     }
 
+    @Operation(summary = "Изменить статус заказа (только ADMIN)")
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponseDto> changeStatus(
+            @Parameter(description = "ID заказа", example = "1")
             @PathVariable("id") Long orderId,
+
+            @Parameter(description = "Новый статус заказа", example = "PAID")
             @RequestParam OrderStatus status
     ) {
-        OrderResponseDto response = service.changeStatus(orderId, status);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.changeStatus(orderId, status));
     }
 }

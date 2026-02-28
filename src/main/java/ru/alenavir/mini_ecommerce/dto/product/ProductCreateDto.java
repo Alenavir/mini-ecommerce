@@ -1,5 +1,6 @@
 package ru.alenavir.mini_ecommerce.dto.product;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,26 +10,33 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
+@Schema(description = "DTO для создания продукта")
 public class ProductCreateDto {
 
-    @NotBlank(message = "Name must not be blank")
+    @Schema(description = "Название продукта", example = "iPhone 15")
+    @NotBlank
     @Size(min = 2, max = 255)
     private String name;
 
-    @Size(max = 500, message = "Description too long")
+    @Schema(description = "Описание продукта", example = "Новый iPhone 15 с OLED экраном")
+    @Size(max = 500)
     private String description;
 
-    @NotNull(message = "Price is required")
-    @Positive(message = "Price must be positive")
+    @Schema(description = "Цена продукта", example = "999.99")
+    @NotNull
+    @Positive
     private BigDecimal price;
 
-    @NotNull(message = "Quantity is required")
-    @PositiveOrZero(message = "Quantity cannot be negative")
+    @Schema(description = "Количество на складе", example = "10")
+    @NotNull
+    @PositiveOrZero
     private Integer quantityInStock;
 
-    @NotNull(message = "Category must not be null")
+    @Schema(description = "Категория продукта", example = "SMARTPHONE")
+    @NotNull
     private Category category;
 
-    @NotBlank(message = "SKU is required")
+    @Schema(description = "SKU продукта", example = "IP15-001")
+    @NotBlank
     private String sku;
 }
