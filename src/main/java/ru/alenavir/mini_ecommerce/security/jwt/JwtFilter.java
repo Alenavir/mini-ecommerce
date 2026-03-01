@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.alenavir.mini_ecommerce.config.SecurityConfig;
 import ru.alenavir.mini_ecommerce.security.CustomUserDetails;
 import ru.alenavir.mini_ecommerce.security.CustomUserServiceImpl;
 import ru.alenavir.mini_ecommerce.security.TokenBlacklistService;
@@ -29,7 +30,10 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+
         String token = getTokenFromRequest(request);
+
         if (token != null && jwtService.validateJwtToken(token)) {
 
             String jti = jwtService.getJtiFromToken(token);

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +27,7 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
     public static final String API_V1 = "/api/v1";
+    public static final String ACTUATOR_BASE_PATH = "/actuator";
 
     public static final String REGISTRATION_ENTRY_POINT = API_V1 + "/users/registration";
     public static final String AUTH_ENTRY_POINT = API_V1 + "/auth/**";
@@ -38,6 +40,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        // Actuator endpoints открываем всем через константу
+                        .requestMatchers(ACTUATOR_BASE_PATH + "/**").permitAll()
+
                         // регистрация и логин доступны всем
                         .requestMatchers(REGISTRATION_ENTRY_POINT).permitAll()
                         .requestMatchers(AUTH_ENTRY_POINT).permitAll()
