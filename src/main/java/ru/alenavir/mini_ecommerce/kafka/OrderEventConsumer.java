@@ -34,7 +34,7 @@ public class OrderEventConsumer {
     @Retryable(
             value = OptimisticLockException.class,
             maxAttempts = 3,
-            backoff = @Backoff(delay = 100)
+            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000)
     )
     @Transactional
     public void handleOrderCreated(OrderCreatedEvent event) {

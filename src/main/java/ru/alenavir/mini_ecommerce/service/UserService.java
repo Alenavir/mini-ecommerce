@@ -7,7 +7,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.dto.user.AdminUserUpdateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
@@ -25,7 +24,6 @@ import ru.alenavir.mini_ecommerce.security.jwt.JwtService;
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Service

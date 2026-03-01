@@ -9,14 +9,6 @@ CREATE TABLE orders (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE order_items (
-     id SERIAL PRIMARY KEY,
-     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-     product_id INTEGER NOT NULL REFERENCES products(id),
-     quantity INT NOT NULL DEFAULT 1,
-     price NUMERIC(19,2) NOT NULL
-);
-
 COMMENT ON TABLE orders IS 'Таблица заказов пользователей';
 COMMENT ON COLUMN orders.id IS 'Уникальный идентификатор заказа';
 COMMENT ON COLUMN orders.user_id IS 'Идентификатор пользователя, оформившего заказ';
@@ -27,6 +19,17 @@ COMMENT ON COLUMN orders.payment_method IS 'Метод оплаты (CASH, CARD)
 COMMENT ON COLUMN orders.created_at IS 'Дата и время создания заказа';
 COMMENT ON COLUMN orders.updated_at IS 'Дата и время последнего обновления заказа';
 
+-- Индекс для быстрого поиска заказов по пользователю
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+COMMENT ON INDEX idx_orders_user_id IS 'Индекс для ускоренного поиска заказов по user_id';
+
+CREATE TABLE order_items (
+     id SERIAL PRIMARY KEY,
+     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+     product_id INTEGER NOT NULL REFERENCES products(id),
+     quantity INT NOT NULL DEFAULT 1,
+     price NUMERIC(19,2) NOT NULL
+);
 
 COMMENT ON TABLE order_items IS 'Товары, входящие в каждый заказ';
 COMMENT ON COLUMN order_items.id IS 'Уникальный идентификатор записи';
@@ -35,3 +38,26 @@ COMMENT ON COLUMN order_items.product_id IS 'Идентификатор това
 COMMENT ON COLUMN order_items.quantity IS 'Количество единиц товара в заказе';
 COMMENT ON COLUMN order_items.price IS 'Цена товара';
 
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+COMMENT ON INDEX idx_order_items_order_id IS 'Индекс для ускоренного join с таблицей orders';
+
+-- Индекс для join с products
+CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);
+COMMENT ON INDEX idx_order_items_product_id IS 'Индекс для ускоренного join с таблицей products';
+
+CREATE TABLE outbox_events (
+       id SERIAL PRIMARY KEY,
+       aggregate_id BIGINT NOT NULL,
+       type VARCHAR(100) NOT NULL,
+       payload JSONB NOT NULL,
+       status VARCHAR(50) NOT NULL,
+       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE outbox_events IS 'Таблица Outbox для хранения событий, которые нужно отправить в Kafka';
+COMMENT ON COLUMN outbox_events.id IS 'Уникальный идентификатор события';
+COMMENT ON COLUMN outbox_events.aggregate_id IS 'ID агрегата, которому принадлежит событие';
+COMMENT ON COLUMN outbox_events.type IS 'Тип события, например "OrderCreated" или "UserUpdated"';
+COMMENT ON COLUMN outbox_events.payload IS 'JSON с данными события, которые будут отправлены в Kafka';
+COMMENT ON COLUMN outbox_events.status IS 'Статус события (NEW, SENT)';
+COMMENT ON COLUMN outbox_events.created_at IS 'Дата и время создания события';

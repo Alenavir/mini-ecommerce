@@ -22,3 +22,11 @@ COMMENT ON COLUMN products.sku IS 'Артикль товара';
 COMMENT ON COLUMN products.created_at IS 'Дата и время создания товара';
 COMMENT ON COLUMN products.updated_at IS 'Дата и время последнего обновления товара';
 COMMENT ON COLUMN products.version IS 'Версия записи для Optimistic Locking';
+
+-- Индекс для поиска по названию
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_products_name_trgm ON products USING gin (name gin_trgm_ops);
+
+-- Индекс для фильтрации по цене и для фильтрации по категории
+CREATE INDEX idx_products_category ON products(category);
+CREATE INDEX idx_products_price ON products(price);
