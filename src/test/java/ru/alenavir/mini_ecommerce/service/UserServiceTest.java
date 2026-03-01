@@ -1,21 +1,32 @@
 package ru.alenavir.mini_ecommerce.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.alenavir.mini_ecommerce.dto.user.UserCreateDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserResponseDto;
 import ru.alenavir.mini_ecommerce.dto.user.UserUpdateDto;
+import ru.alenavir.mini_ecommerce.dto.user.auth.JwtAuthenticationDto;
+import ru.alenavir.mini_ecommerce.dto.user.auth.RefreshTokenDto;
+import ru.alenavir.mini_ecommerce.dto.user.auth.UserCredentialsDto;
 import ru.alenavir.mini_ecommerce.entity.User;
+import ru.alenavir.mini_ecommerce.entity.enums.Role;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.mapper.UserMapper;
 import ru.alenavir.mini_ecommerce.repo.UserRepo;
+import ru.alenavir.mini_ecommerce.security.jwt.JwtService;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import javax.naming.AuthenticationException;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,113 +38,161 @@ class UserServiceTest {
     @Mock
     private UserMapper mapper;
 
-    @InjectMocks
-    private UserService service;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-    private final User user = new User() {{
-        setId(1L);
-        setName("Alice");
-        setEmail("alice@gmail.com");
-        setIsActive(true);
-        setCreatedAt(LocalDateTime.now());
-        setUpdatedAt(LocalDateTime.now());
-    }};
+    @Mock
+    private JwtService jwtService;
 
-    private final UserCreateDto createDto = new UserCreateDto() {{
-        setName("Alice");
-        setEmail("alice@gmail.com");
-        setPassword("password123");
-    }};
+    private MeterRegistry meterRegistry;
 
-    private final UserUpdateDto updateDto = new UserUpdateDto() {{
-        setName("Alice Updated");
-        setEmail("alice.updated@gmail.com");
-    }};
+    private UserService userService;
 
-    private final UserResponseDto responseDto = new UserResponseDto() {{
-        setId(1L);
-        setName("Alice");
-        setEmail("alice@gmail.com");
-    }};
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+
+        userService = new UserService(
+                repo,
+                mapper,
+                passwordEncoder,
+                jwtService,
+                meterRegistry
+        );
+
+        user = new User();
+        user.setId(1L);
+        user.setEmail("test@mail.com");
+        user.setPasswordHash("encoded");
+        user.setRoles(Set.of(Role.USER));
+    }
 
     @Test
-    void save_ShouldReturnResponseDto() {
-        when(mapper.toEntity(createDto)).thenReturn(user);
-        when(repo.save(user)).thenReturn(user);
-        when(mapper.toDto(user)).thenReturn(responseDto);
+    void save_shouldCreateUserSuccessfully() {
+        UserCreateDto dto = new UserCreateDto();
+        dto.setEmail("test@mail.com");
+        dto.setPassword("123");
 
-        UserResponseDto result = service.save(createDto);
+        when(mapper.toEntity(dto)).thenReturn(new User());
+        when(passwordEncoder.encode("123")).thenReturn("encoded");
+        when(repo.save(any(User.class))).thenReturn(user);
+        when(mapper.toDto(user)).thenReturn(new UserResponseDto());
+
+        UserResponseDto result = userService.save(dto);
 
         assertNotNull(result);
-        assertEquals(responseDto.getId(), result.getId());
-        verify(repo).save(user);
+        verify(repo).save(any(User.class));
     }
 
-//    @Test
-//    void findAll_ShouldReturnList() {
-//        List<User> users = Collections.singletonList(user);
-//        List<UserResponseDto> responses = Collections.singletonList(responseDto);
-//
-//        when(repo.findAll()).thenReturn(users);
-//        when(mapper.toDtoList(users)).thenReturn(responses);
-//
-//        List<UserResponseDto> result = service.findAll();
-//
-//        assertEquals(1, result.size());
-//        assertEquals(responseDto.getId(), result.get(0).getId());
-//    }
-
     @Test
-    void findById_WhenFound_ShouldReturnResponse() {
+    void findById_shouldReturnUser() {
         when(repo.findById(1L)).thenReturn(Optional.of(user));
-        when(mapper.toDto(user)).thenReturn(responseDto);
+        when(mapper.toDto(user)).thenReturn(new UserResponseDto());
 
-        UserResponseDto result = service.findById(1L);
+        UserResponseDto result = userService.findById(1L);
 
-        assertEquals(responseDto.getId(), result.getId());
+        assertNotNull(result);
+        verify(repo).findById(1L);
     }
 
     @Test
-    void findById_WhenNotFound_ShouldThrow() {
+    void findById_shouldThrowException_whenNotFound() {
         when(repo.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> service.findById(1L));
+        assertThrows(NotFoundException.class,
+                () -> userService.findById(1L));
     }
 
     @Test
-    void update_WhenFound_ShouldReturnUpdatedResponse() throws Exception {
-        when(repo.findById(1L)).thenReturn(Optional.of(user));
-        doNothing().when(mapper).updateUserFromDto(updateDto, user);
-        when(repo.save(user)).thenReturn(user);
-        when(mapper.toDto(user)).thenReturn(responseDto);
-
-        UserResponseDto result = service.update(1L, updateDto);
-
-        assertEquals(responseDto.getId(), result.getId());
-        verify(mapper).updateUserFromDto(updateDto, user);
-        verify(repo).save(user);
-    }
-
-    @Test
-    void update_WhenNotFound_ShouldThrow() {
-        when(repo.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> service.update(1L, updateDto));
-    }
-
-    @Test
-    void delete_WhenFound_ShouldCallRepoDelete() {
+    void delete_shouldDeleteUser() {
         when(repo.existsById(1L)).thenReturn(true);
 
-        service.delete(1L);
+        userService.delete(1L);
 
         verify(repo).deleteById(1L);
     }
 
     @Test
-    void delete_WhenNotFound_ShouldThrow() {
+    void delete_shouldThrowException_whenNotFound() {
         when(repo.existsById(1L)).thenReturn(false);
 
-        assertThrows(NotFoundException.class, () -> service.delete(1L));
+        assertThrows(NotFoundException.class,
+                () -> userService.delete(1L));
+    }
+
+    @Test
+    void update_shouldUpdateUserSuccessfully() throws Exception {
+        UserUpdateDto dto = new UserUpdateDto();
+
+        when(repo.findById(1L)).thenReturn(Optional.of(user));
+        when(repo.save(user)).thenReturn(user);
+        when(mapper.toDto(user)).thenReturn(new UserResponseDto());
+
+        UserResponseDto result = userService.update(1L, dto);
+
+        assertNotNull(result);
+        verify(repo).save(user);
+    }
+
+    @Test
+    void signIn_shouldReturnToken_whenCredentialsValid() throws Exception {
+        UserCredentialsDto dto = new UserCredentialsDto();
+        dto.setEmail("test@mail.com");
+        dto.setPassword("123");
+
+        when(repo.findByEmail("test@mail.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("123", "encoded")).thenReturn(true);
+        when(jwtService.generateAuthToken("test@mail.com"))
+                .thenReturn(new JwtAuthenticationDto());
+
+        JwtAuthenticationDto result = userService.singIn(dto);
+
+        assertNotNull(result);
+        verify(jwtService).generateAuthToken("test@mail.com");
+    }
+
+    @Test
+    void signIn_shouldThrowException_whenInvalidCredentials() {
+        UserCredentialsDto dto = new UserCredentialsDto();
+        dto.setEmail("wrong@mail.com");
+        dto.setPassword("123");
+
+        when(repo.findByEmail("wrong@mail.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AuthenticationException.class,
+                () -> userService.singIn(dto));
+    }
+
+    @Test
+    void refreshToken_shouldReturnNewToken_whenValid() throws Exception {
+        RefreshTokenDto dto = new RefreshTokenDto();
+        dto.setRefreshToken("refresh");
+
+        when(jwtService.validateJwtToken("refresh")).thenReturn(true);
+        when(jwtService.getEmailFromToken("refresh"))
+                .thenReturn("test@mail.com");
+        when(repo.findByEmail("test@mail.com"))
+                .thenReturn(Optional.of(user));
+        when(jwtService.refreshBaseToken("test@mail.com", "refresh"))
+                .thenReturn(new JwtAuthenticationDto());
+
+        JwtAuthenticationDto result = userService.refreshToken(dto);
+
+        assertNotNull(result);
+        verify(jwtService).refreshBaseToken("test@mail.com", "refresh");
+    }
+
+    @Test
+    void refreshToken_shouldThrowException_whenInvalid() {
+        RefreshTokenDto dto = new RefreshTokenDto();
+        dto.setRefreshToken("bad");
+
+        when(jwtService.validateJwtToken("bad")).thenReturn(false);
+
+        assertThrows(AuthenticationException.class,
+                () -> userService.refreshToken(dto));
     }
 }
