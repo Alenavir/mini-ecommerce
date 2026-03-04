@@ -1,15 +1,14 @@
 package ru.alenavir.mini_ecommerce.service;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import ru.alenavir.mini_ecommerce.dto.order.OrderCreateDto;
 import ru.alenavir.mini_ecommerce.dto.order.OrderItemCreateDto;
 import ru.alenavir.mini_ecommerce.dto.order.OrderResponseDto;
@@ -23,7 +22,9 @@ import ru.alenavir.mini_ecommerce.repo.ProductRepo;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,8 +45,13 @@ class OrderServiceTest {
     @Mock
     private OrderEventProducer orderEventProducer;
 
-    private MeterRegistry meterRegistry;
+    @Mock
+    private CacheManager cacheManager;
 
+    @Mock
+    private Cache cache;
+
+    private MeterRegistry meterRegistry;
     private OrderService orderService;
 
     private OrderCreateDto createDto;
@@ -54,7 +60,6 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-
         meterRegistry = new SimpleMeterRegistry();
 
         orderService = new OrderService(
@@ -62,7 +67,8 @@ class OrderServiceTest {
                 productRepo,
                 mapper,
                 orderEventProducer,
-                meterRegistry
+                meterRegistry,
+                cacheManager
         );
 
         product = new Product();
@@ -93,11 +99,16 @@ class OrderServiceTest {
         when(mapper.toEntity(createDto)).thenReturn(new Order());
         when(mapper.toDto(order)).thenReturn(new OrderResponseDto());
 
+        when(cacheManager.getCache("lastOrders")).thenReturn(cache);
+
         OrderResponseDto result = orderService.create(createDto);
 
         assertNotNull(result);
+
         verify(orderRepo).save(any(Order.class));
         verify(orderEventProducer).sendOrderCreatedEvent(any());
+
+        verify(cache).evict(order.getUserId());
     }
 
     @Test

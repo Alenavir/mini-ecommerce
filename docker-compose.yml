@@ -33,7 +33,9 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-    restart: unless-stopped
+    volumes:
+      - cache:/data
 
 volumes:
   postgres_data:
+  cache:
