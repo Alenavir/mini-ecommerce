@@ -29,7 +29,7 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponseDto> create(
-            @org.springframework.web.bind.annotation.RequestBody @Valid ProductCreateDto createDto
+            @RequestBody @Valid ProductCreateDto createDto
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(service.create(createDto));
@@ -70,7 +70,7 @@ public class ProductController {
     public ResponseEntity<ProductResponseDto> update(
             @Parameter(description = "ID продукта", example = "1")
             @PathVariable Long id,
-            @org.springframework.web.bind.annotation.RequestBody @Valid ProductUpdateDto updateDto
+            @RequestBody @Valid ProductUpdateDto updateDto
     ) {
         return ResponseEntity.ok(service.update(id, updateDto));
     }

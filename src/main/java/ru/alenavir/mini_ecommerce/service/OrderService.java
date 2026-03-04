@@ -4,9 +4,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.alenavir.mini_ecommerce.dto.order.OrderCreateDto;
@@ -42,6 +45,9 @@ public class OrderService {
     private final OrderMapper mapper;
     private final OrderEventProducer orderEventProducer;
     private final MeterRegistry meterRegistry;
+    private final CacheManager cacheManager;
+
+    private static final int LIMIT_ORDERS = 10;
 
     @Transactional
     public OrderResponseDto create(OrderCreateDto createDto) {
@@ -96,10 +102,24 @@ public class OrderService {
             log.info("Заказ создан: orderId={}, totalAmount={}", saved.getId(), saved.getTotalAmount());
             meterRegistry.counter("orders.created").increment();
 
+            // --- Очистка кеша последних заказов пользователя ---
+            Cache cache = cacheManager.getCache("lastOrders");
+            if (cache != null) {
+                cache.evict(saved.getUserId());
+                log.info("Очистка кеша lastOrders::{} в Redis выполнена", saved.getUserId());
+            }
+
             return mapper.toDto(saved);
         } finally {
             timer.stop(meterRegistry.timer("orders.create.time"));
         }
+    }
+
+    @Cacheable(value = "lastOrders", key = "#userId")
+    public List<OrderResponseDto> findLastOrders(Long userId) {
+        List<Order> orders = repo.findLastOrdersByUserId(userId, PageRequest.of(0, LIMIT_ORDERS));
+        log.info("Получение последних {} заказов для userId={}", LIMIT_ORDERS, userId);
+        return mapper.toDtoList(orders);
     }
 
     @Cacheable(value = "orders", key = "#id")

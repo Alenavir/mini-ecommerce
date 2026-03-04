@@ -6,6 +6,7 @@ import lombok.Setter;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.entity.enums.PaymentMethod;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Schema(description = "Ответ с информацией о заказе")
-public class OrderResponseDto {
+public class OrderResponseDto implements Serializable {
 
     @Schema(description = "ID заказа", example = "10")
     private Long id;

@@ -217,7 +217,7 @@ public class UserService {
                 });
     }
 
-    private User findByEmail(String email) {
+    public User findByEmail(String email) {
         return repo.findByEmail(email)
                 .orElseThrow(() -> {
                     log.warn("Пользователь с email={} не найден", email);

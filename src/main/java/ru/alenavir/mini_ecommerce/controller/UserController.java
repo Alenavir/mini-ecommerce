@@ -34,7 +34,7 @@ public class UserController {
     @Operation(summary = "Регистрация нового пользователя")
     @PostMapping("/registration")
     public ResponseEntity<UserResponseDto> create(
-            @org.springframework.web.bind.annotation.RequestBody @Valid UserCreateDto createDto
+            @RequestBody @Valid UserCreateDto createDto
     ) throws BadRequestException {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(service.save(createDto));
