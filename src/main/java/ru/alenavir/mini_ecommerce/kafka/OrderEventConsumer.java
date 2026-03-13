@@ -6,8 +6,6 @@ import io.micrometer.core.instrument.Timer;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -47,11 +45,6 @@ public class OrderEventConsumer {
             .register(Metrics.globalRegistry);
 
     @KafkaListener(topics = "order-events", groupId = "order-group")
-    @Retryable(
-            value = OptimisticLockException.class,
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000)
-    )
     @Transactional
     public void handleOrderCreated(OrderCreatedEvent event) {
 

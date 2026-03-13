@@ -1,5 +1,6 @@
 package ru.alenavir.mini_ecommerce.config.kafka;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,11 +11,13 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.ExponentialBackOff;
 import org.springframework.util.backoff.FixedBackOff;
 import ru.alenavir.mini_ecommerce.kafka.OrderCreatedEvent;
 
 @Configuration
 @EnableKafka
+@Slf4j
 public class KafkaConsumerConfig {
 
     @Bean
@@ -40,7 +43,10 @@ public class KafkaConsumerConfig {
     public DefaultErrorHandler errorHandler(
             KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate) {
 
-        FixedBackOff backOff = new FixedBackOff(2000L, 3);
+        ExponentialBackOff backOff = new ExponentialBackOff();
+        backOff.setInitialInterval(1000L);   // первая пауза
+        backOff.setMultiplier(2.0);          // во сколько раз увеличивать
+        backOff.setMaxInterval(10000L);      // максимальная пауза
 
         DeadLetterPublishingRecoverer recoverer =
                 new DeadLetterPublishingRecoverer(
@@ -56,7 +62,8 @@ public class KafkaConsumerConfig {
         handler.addNotRetryableExceptions(IllegalArgumentException.class);
 
         handler.setRetryListeners((record, ex, attempt) ->
-                System.out.println("Retry attempt: " + attempt));
+                log.warn("Retry {} for record {}", attempt, record.key(), ex)
+        );
 
         return handler;
     }
