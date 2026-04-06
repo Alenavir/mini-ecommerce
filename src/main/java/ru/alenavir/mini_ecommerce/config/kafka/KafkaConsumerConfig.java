@@ -12,7 +12,6 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
-import org.springframework.util.backoff.FixedBackOff;
 import ru.alenavir.mini_ecommerce.kafka.OrderCreatedEvent;
 
 @Configuration
