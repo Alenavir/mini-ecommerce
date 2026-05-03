@@ -99,7 +99,7 @@ public class OrderService {
 
             Order saved = repo.save(order);
 
-            // --- Сохраняем событие в Outbox (в той же транзакции!) ---
+            // --- Сохранение событие в Outbox ---
             OrderCreatedEvent event = new OrderCreatedEvent(
                     UUID.randomUUID().toString(),
                     saved.getId(),
