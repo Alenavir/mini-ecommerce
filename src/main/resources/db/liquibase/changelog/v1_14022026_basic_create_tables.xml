@@ -21,4 +21,14 @@
         <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v3_16022026_create_table_orders.sql"/>
     </changeSet>
 
+    <changeSet id="v4_03052026_create_table_processed_events" author="Alena Sannikova">
+        <validCheckSum>ANY</validCheckSum>
+        <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v4_03052026_create_table_processed_events.sql"/>
+    </changeSet>
+
+    <changeSet id="v5_03052026_create_table_outbox_events" author="Alena Sannikova">
+        <validCheckSum>ANY</validCheckSum>
+        <sqlFile dbms="postgresql" encoding="utf8" path="db/liquibase/sql/v5_03052026_create_table_outbox_events.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -58,7 +58,11 @@ public class KafkaConsumerConfig {
         DefaultErrorHandler handler =
                 new DefaultErrorHandler(recoverer, backOff);
 
-        handler.addNotRetryableExceptions(IllegalArgumentException.class);
+        // Дубль события — не ретраить, это не ошибка
+        handler.addNotRetryableExceptions(
+                IllegalArgumentException.class,
+                org.springframework.dao.DataIntegrityViolationException.class
+        );
 
         handler.setRetryListeners((record, ex, attempt) ->
                 log.warn("Retry {} for record {}", attempt, record.key(), ex)
