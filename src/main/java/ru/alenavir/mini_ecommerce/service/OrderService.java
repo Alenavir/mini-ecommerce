@@ -1,5 +1,7 @@
 package ru.alenavir.mini_ecommerce.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +20,14 @@ import ru.alenavir.mini_ecommerce.dto.order.OrderResponseDto;
 import ru.alenavir.mini_ecommerce.dto.order.OrderUpdateDto;
 import ru.alenavir.mini_ecommerce.entity.Order;
 import ru.alenavir.mini_ecommerce.entity.OrderItem;
+import ru.alenavir.mini_ecommerce.entity.OutboxEvent;
 import ru.alenavir.mini_ecommerce.entity.Product;
 import ru.alenavir.mini_ecommerce.entity.enums.OrderStatus;
 import ru.alenavir.mini_ecommerce.exceptions.NotFoundException;
 import ru.alenavir.mini_ecommerce.kafka.OrderCreatedEvent;
-import ru.alenavir.mini_ecommerce.kafka.OrderEventProducer;
 import ru.alenavir.mini_ecommerce.mapper.OrderMapper;
 import ru.alenavir.mini_ecommerce.repo.OrderRepo;
+import ru.alenavir.mini_ecommerce.repo.OutboxEventRepo;
 import ru.alenavir.mini_ecommerce.repo.ProductRepo;
 
 import java.math.BigDecimal;
@@ -32,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,22 +47,22 @@ public class OrderService {
     private final OrderRepo repo;
     private final ProductRepo productRepo;
     private final OrderMapper mapper;
-    private final OrderEventProducer orderEventProducer;
+    private final OutboxEventRepo outboxEventRepo;
     private final MeterRegistry meterRegistry;
     private final CacheManager cacheManager;
+    private final ObjectMapper objectMapper;
 
     private static final int LIMIT_ORDERS = 10;
 
-    @Transactional
+    @Transactional  // одна транзакция — заказ + outbox событие
     public OrderResponseDto create(OrderCreateDto createDto) {
         Timer.Sample timer = Timer.start(meterRegistry);
         try {
-            log.info("Создание заказа для userId={} с {} товарами", createDto.getUserId(), createDto.getItems().size());
+            log.info("Создание заказа для userId={}", createDto.getUserId());
 
             Order order = mapper.toEntity(createDto);
 
-            List<Long> productIds = createDto.getItems()
-                    .stream()
+            List<Long> productIds = createDto.getItems().stream()
                     .map(OrderItemCreateDto::getProductId)
                     .toList();
 
@@ -72,7 +76,6 @@ public class OrderService {
             for (OrderItemCreateDto itemDto : createDto.getItems()) {
                 Product product = productMap.get(itemDto.getProductId());
                 if (product == null) {
-                    log.error("Продукт с id={} не найден", itemDto.getProductId());
                     throw new NotFoundException("Product with id " + itemDto.getProductId() + " not found");
                 }
 
@@ -81,8 +84,9 @@ public class OrderService {
                 item.setProduct(product);
                 item.setQuantity(itemDto.getQuantity());
                 item.setPrice(product.getPrice());
-
-                totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
+                totalAmount = totalAmount.add(
+                        product.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity()))
+                );
                 items.add(item);
             }
 
@@ -95,21 +99,34 @@ public class OrderService {
 
             Order saved = repo.save(order);
 
-            // --- Kafka ---
-            OrderCreatedEvent event = new OrderCreatedEvent(saved.getId(), saved.getUserId(), productIds);
-            orderEventProducer.sendOrderCreatedEvent(event);
+            // --- Сохраняем событие в Outbox (в той же транзакции!) ---
+            OrderCreatedEvent event = new OrderCreatedEvent(
+                    UUID.randomUUID().toString(),
+                    saved.getId(),
+                    saved.getUserId(),
+                    productIds
+            );
 
-            log.info("Заказ создан: orderId={}, totalAmount={}", saved.getId(), saved.getTotalAmount());
+            OutboxEvent outbox = new OutboxEvent();
+            outbox.setId(UUID.randomUUID());
+            outbox.setEventType("OrderCreatedEvent");
+            outbox.setPayload(objectMapper.writeValueAsString(event));
+            outbox.setStatus(OutboxEvent.OutboxStatus.PENDING);
+            outbox.setCreatedAt(now);
+            outbox.setAttempts(0);
+            outboxEventRepo.save(outbox);
+
+            log.info("Заказ создан orderId={}, outbox событие сохранено", saved.getId());
             meterRegistry.counter("orders.created").increment();
 
-            // --- Очистка кеша последних заказов пользователя ---
             Cache cache = cacheManager.getCache("lastOrders");
             if (cache != null) {
                 cache.evict(saved.getUserId());
-                log.info("Очистка кеша lastOrders::{} в Redis выполнена", saved.getUserId());
             }
 
             return mapper.toDto(saved);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Ошибка сериализации события", e);
         } finally {
             timer.stop(meterRegistry.timer("orders.create.time"));
         }

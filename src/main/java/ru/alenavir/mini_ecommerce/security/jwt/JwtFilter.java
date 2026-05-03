@@ -28,8 +28,6 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String path = request.getRequestURI();
-
         String token = getTokenFromRequest(request);
 
         if (token != null && jwtService.validateJwtToken(token)) {
