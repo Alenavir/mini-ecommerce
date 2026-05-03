@@ -27,6 +27,8 @@ public class SecurityConfig {
 
     public static final String API_V1 = "/api/v1";
     public static final String ACTUATOR_BASE_PATH = "/actuator";
+    public static final String SWAGGER_UI = "/swagger-ui/**";
+    public static final String SWAGGER_API_DOCS = "/v3/api-docs/**";
 
     public static final String REGISTRATION_ENTRY_POINT = API_V1 + "/users/registration";
     public static final String AUTH_ENTRY_POINT = API_V1 + "/auth/**";
@@ -41,6 +43,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Actuator endpoints открываем всем через константу
                         .requestMatchers(ACTUATOR_BASE_PATH + "/**").permitAll()
+
+                        .requestMatchers(
+                                SWAGGER_UI,
+                                SWAGGER_API_DOCS
+                        ).permitAll()
 
                         // регистрация и логин доступны всем
                         .requestMatchers(REGISTRATION_ENTRY_POINT).permitAll()

@@ -1,5 +1,6 @@
 package ru.alenavir.mini_ecommerce.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,12 +17,23 @@ import java.util.Map;
 @Configuration
 public class RedisConfig {
 
+    @Value("${redis.ttl.orders}")
+    private long ordersTtl;
+
+    @Value("${redis.ttl.last-orders}")
+    private long lastOrdersTtl;
+
+    @Value("${redis.ttl.products}")
+    private long productsTtl;
+
+    @Value("${redis.ttl.users}")
+    private long usersTtl;
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.findAndRegisterModules();
-
         mapper.activateDefaultTyping(
                 mapper.getPolymorphicTypeValidator(),
                 ObjectMapper.DefaultTyping.NON_FINAL
@@ -30,9 +42,9 @@ public class RedisConfig {
         GenericJackson2JsonRedisSerializer jsonSerializer =
                 new GenericJackson2JsonRedisSerializer(mapper);
 
-        RedisCacheConfiguration config = RedisCacheConfiguration
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration
                 .defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10))
+                .entryTtl(Duration.ofMinutes(ordersTtl))
                 .serializeKeysWith(
                         RedisSerializationContext.SerializationPair
                                 .fromSerializer(RedisSerializer.string())
@@ -42,16 +54,15 @@ public class RedisConfig {
                                 .fromSerializer(jsonSerializer)
                 );
 
-        // Разные TTL для разных кешей
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
-                "orders",     config.entryTtl(Duration.ofMinutes(10)),
-                "lastOrders", config.entryTtl(Duration.ofMinutes(5)),
-                "products",   config.entryTtl(Duration.ofMinutes(30)),
-                "users",      config.entryTtl(Duration.ofMinutes(15))
+                "orders",     defaultConfig.entryTtl(Duration.ofMinutes(ordersTtl)),
+                "lastOrders", defaultConfig.entryTtl(Duration.ofMinutes(lastOrdersTtl)),
+                "products",   defaultConfig.entryTtl(Duration.ofMinutes(productsTtl)),
+                "users",      defaultConfig.entryTtl(Duration.ofMinutes(usersTtl))
         );
 
         return RedisCacheManager.builder(factory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }
